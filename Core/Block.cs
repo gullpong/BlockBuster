@@ -94,19 +94,22 @@ namespace BlockBuster.Core
         public Block.Types Type { get; private set; }
         public int Color { get; private set; }
         public int Dur { get; private set; }
-        public double Pos { get; private set; }
+        public int Rank { get; private set; }
+        public int Total { get; private set; }
 
         private bool alive;
 
         public BlockSeed(ObjectPool pool, IObjectAnimation animation,
-                         IObjectAnimation blockAnimation, Block.Types type, int color, int dur, double pos)
+                         IObjectAnimation blockAnimation, Block.Types type, int color, int dur,
+                         int rank, int total)
             : base(pool)
         {
             this.BlockAnimation = blockAnimation;
             this.Type = type;
             this.Color = color;
             this.Dur = dur;
-            this.Pos = pos;
+            this.Rank = rank;
+            this.Total = total;
 
             this.alive = true;
 
@@ -125,9 +128,10 @@ namespace BlockBuster.Core
             this.alive = false;                        
         }
     
-        public void Reposition(double pos)
+        public void Reorder(int rank, int total)
         {
-            this.Pos = pos;
+            this.Rank = rank;
+            this.Total = total;
         }
     }
 
@@ -171,7 +175,7 @@ namespace BlockBuster.Core
             int i = 0;
             foreach (var _blockSeed in this.Q)
             {
-                _blockSeed.Reposition((double)i / (double)this.qSize);
+                _blockSeed.Reorder(i, this.qSize);
                 i++;
             }
 
@@ -187,12 +191,13 @@ namespace BlockBuster.Core
                 var color = Process.RandGen.Next() % this.blockColors;
                 var dur = type == Block.Types.Normal && Process.RandGen.Next() % 100 < this.toughFreq ?
                           Process.RandGen.Next() % this.durMax + 1 : 1;
-                var pos = (double)(this.Q.Count - 1 + this.qSize) / (double)this.qSize;
+                var rank = this.Q.Count - 1 + this.qSize;
                 var aniPair = this.createAnimationPair();
-                var blockSeed = new BlockSeed(this.pool, aniPair.Item1, aniPair.Item2, type, color, dur, pos);
+                var blockSeed = new BlockSeed(this.pool, aniPair.Item1, aniPair.Item2, type, color, dur,
+                                              rank, this.qSize);
                 this.Depend(blockSeed);
                 this.Q.Enqueue(blockSeed);
-                blockSeed.Reposition((double)(this.Q.Count - 1) / (double)this.qSize);
+                blockSeed.Reorder(this.Q.Count - 1, this.qSize);
             }
         }
     }

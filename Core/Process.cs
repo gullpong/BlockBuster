@@ -7,10 +7,17 @@ namespace BlockBuster.Core
     using BustGroup = Tuple<List<Block>, List<Block>>;
     using AnimationPair = Tuple<IObjectAnimation, IObjectAnimation>;
 
+    public enum GameModes
+    {
+        Classic,
+        TimeAttack
+    }
+
     // Process settings
     public struct ProcessSettings
     {
-        public int gameMode;
+        public int fps;
+        public GameModes gameMode;
 
         public int boardRows;
         public int boardCols;
@@ -26,7 +33,9 @@ namespace BlockBuster.Core
         public int bustThreshold;
         public int bustScoreBase;
         public double comboBonusCoeff;
-        public double comboGuageDecrement;
+        public double comboTimeLimit;
+        public double timeLimit;
+        public int moveLimit;
     }
 
     public sealed class Process
@@ -42,16 +51,21 @@ namespace BlockBuster.Core
         private Combo combo;
         private Focus focus;
         private Next next;
+        private Time time;
+        private Moves moves;
         private Board board;
         private Queue<BustGroup> bustGroups;
+        private Queue<string> messages;
 
         public enum Phases
         {
+            CountDown,
             Ready,
             BlockSlide,
             BlockShuffle,
             BlockBust,
-            NextCycle
+            NextCycle,
+            GameOver
         }
         public Phases Phase { get; private set; }
         public VirtualKey UserInput { get; set; }
@@ -101,7 +115,7 @@ namespace BlockBuster.Core
                                      this.settings.bustScoreBase);
 
             this.combo = new Combo(this.pool, this.createAnimation(typeof(Combo)),
-                                   this.settings.comboGuageDecrement,
+                                   1.0 / (double)this.settings.fps / this.settings.comboTimeLimit,
                                    this.settings.comboBonusCoeff);
 
             this.focus = new Focus(this.pool, this.createAnimation(typeof(Focus)),
@@ -118,12 +132,30 @@ namespace BlockBuster.Core
                                  this.settings.toughFreq,
                                  this.settings.durabilityMax);
 
+            if (this.settings.gameMode == GameModes.Classic)
+            {
+                this.moves = new Moves(this.pool, this.createAnimation(typeof(Moves)),
+                                       this.settings.moveLimit);
+
+                this.Phase = Phases.NextCycle;
+            } else
+            {
+                this.time = new Time(this.pool, this.createAnimation(typeof(Time)),
+                                     1.0 / (double)this.settings.fps / this.settings.timeLimit);
+
+                this.Phase = Phases.CountDown;
+                this.messages = new Queue<string>();
+                this.messages.Enqueue("Ready");
+                this.messages.Enqueue("3");
+                this.messages.Enqueue("2");
+                this.messages.Enqueue("1");
+                this.messages.Enqueue("Go!");
+            }
+
             this.board = new Board(this.pool, this.focus, this.next,
                                    this.settings.boardRows,
                                    this.settings.boardCols,
                                    this.settings.bustThreshold);
-
-            this.Phase = Phases.NextCycle;
         }
 
         public void Do()
@@ -131,13 +163,56 @@ namespace BlockBuster.Core
             // Process object pool.
             this.pool.Do();
 
+            // Wait until all messages are displayed.
+            foreach (var obj in this.pool.Objects)
+            {
+                if (obj.GetType() == typeof(MessageSticker))
+                    return;
+            }
+
             // Process through phases.
             if (!this.board.IsReady())
                 return;
             switch (this.Phase)
             {
                 // --------------------------------------------------------------------
+                case Phases.CountDown:
+                    if (this.messages.Count > 0)
+                    {
+                        new MessageSticker(this.pool, this.createAnimation(typeof(MessageSticker)),
+                                           this.messages.Dequeue());
+                    }
+                    else
+                    {
+                        this.time.Elapse = true;
+                        this.Phase = Phases.NextCycle;
+                    }
+                    break;
+
+                // --------------------------------------------------------------------
                 case Phases.Ready:
+                    if (this.settings.gameMode == GameModes.Classic)
+                    {
+                        if (this.moves.Remain <= 0)
+                        {
+                            this.Phase = Phases.GameOver;
+                            this.combo.Break();
+                            new MessageSticker(this.pool, this.createAnimation(typeof(MessageSticker)),
+                                               "Out of Moves");
+                            break;
+                        }
+                    } else
+                    {
+                        if (this.time.Remain <= 0.0)
+                        {
+                            this.Phase = Phases.GameOver;
+                            this.combo.Break();
+                            new MessageSticker(this.pool, this.createAnimation(typeof(MessageSticker)),
+                                               "Time Over");
+                            break;
+                        }
+                    }
+
                     switch (this.UserInput)
                     {
                         case VirtualKey.Left:
@@ -168,10 +243,21 @@ namespace BlockBuster.Core
                             }
                             break;
                     }
-                    if (this.Phase != Phases.Ready)
+                    if (this.settings.gameMode == GameModes.Classic)
                     {
-                        this.record.AddMove();
-                        this.combo.Elapse = false;
+                        if (this.Phase != Phases.Ready)
+                        {
+                            this.moves.Decrese();
+                            this.record.AddMove();
+                        }
+                    }
+                    else
+                    {
+                        if (this.Phase != Phases.Ready)
+                        {
+                            this.record.AddMove();
+                            this.combo.Elapse = false;
+                        }
                     }
                     break;
 
@@ -181,12 +267,7 @@ namespace BlockBuster.Core
                     if (this.bustGroups.Count > 0)
                     {
                         this.combo.Stack();
-                        /*
-                        // Create Combo Sticker.
-                        if (this.combo.Count > 0)
-                            new ComboSticker(this.pool, this.createAnimation(typeof(ComboSticker)),
-                                             this.combo.Count, this.combo.Bonus);
-                         */
+                        this.record.ComboCount(this.combo.Count);
                     }
                     else
                         this.combo.Break();
@@ -218,10 +299,23 @@ namespace BlockBuster.Core
 
                 // --------------------------------------------------------------------
                 case Phases.NextCycle:
-                    this.next.Refill();
-                    this.combo.Elapse = true;
-                    this.UserInput = VirtualKey.None;
-                    this.Phase = Phases.Ready;
+                    if (this.settings.gameMode == GameModes.Classic)
+                    {
+                        this.next.Refill();
+                        this.UserInput = VirtualKey.None;
+                        this.Phase = Phases.Ready;
+                    }
+                    else
+                    {
+                        this.next.Refill();
+                        this.combo.Elapse = true;
+                        this.UserInput = VirtualKey.None;
+                        this.Phase = Phases.Ready;
+                    }
+                    break;
+
+                // --------------------------------------------------------------------
+                case Phases.GameOver:
                     break;
             }
         }

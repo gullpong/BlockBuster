@@ -99,10 +99,12 @@ namespace BlockBuster.Core
                         this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row, nblock.Col + 1);
                         this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row - 1, nblock.Col);
                         this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row, nblock.Col - 1);
+                        /*
                         this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row + 1, nblock.Col + 1);
                         this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row + 1, nblock.Col - 1);
                         this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row - 1, nblock.Col + 1);
                         this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row - 1, nblock.Col - 1);
+                        */
                     }
                     bustGroups.Enqueue(new BustGroup(normalBlocks, bubbleBlocks));
                 }

@@ -17,13 +17,13 @@
     <AppXManifest Include="D:\Work\VC#\BlockBuster\bin\Debug\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2015-05-17T22:02:21.109</Modified>
+      <Modified>2015-05-24T20:17:29.482</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="D:\Work\VC#\BlockBuster\bin\Debug\BlockBuster.exe">
       <PackagePath>BlockBuster.exe</PackagePath>
-      <Modified>2015-05-24T00:24:25.712</Modified>
+      <Modified>2015-05-24T22:42:11.728</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Work\VC#\BlockBuster\Assets\Logo.scale-100.png">
       <PackagePath>Assets\Logo.scale-100.png</PackagePath>
@@ -55,7 +55,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="D:\Work\VC#\BlockBuster\bin\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>
-      <Modified>2015-05-17T22:02:20.534</Modified>
+      <Modified>2015-05-24T20:17:28.608</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
