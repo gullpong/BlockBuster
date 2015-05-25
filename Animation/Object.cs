@@ -265,8 +265,8 @@ namespace BlockBuster.Animation
                     this.count.Elem.Text = String.Format("{0} COMBOs!!", this.model.Count);
                 else
                     this.count.Elem.Text = "COMBO!!";
-                Color[] col = { Colors.DarkRed, Colors.LightPink, Colors.Yellow, Colors.LightPink };
-                this.count.Elem.Foreground = new SolidColorBrush(col[(int)this.blink % 4]);
+                this.count.Elem.Foreground = new SolidColorBrush(Colors.Ivory);
+                this.count.Elem.FontSize = this.fontSize * (1.0 + (Process.RandGen.NextDouble() - 0.5) * 0.1);
                 this.blink += 0.5 * this.speed;
             } else
             {
@@ -282,7 +282,8 @@ namespace BlockBuster.Animation
                 if (this.showBonus)
                 {
                     this.bonus.Elem.Text = String.Format("Bonus +{0}%", this.model.Bonus * 100.0);
-                    this.bonus.Elem.Foreground = new SolidColorBrush(Colors.Ivory);
+                    Color[] col = { Colors.DarkRed, Colors.LightPink, Colors.Yellow, Colors.LightPink };
+                    this.bonus.Elem.Foreground = new SolidColorBrush(col[(int)this.blink % 4]);
                 }
                 else
                 {

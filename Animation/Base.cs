@@ -126,33 +126,26 @@ namespace BlockBuster.Animation
 
             public void Animate()
             {
-                if (this.elem.ActualWidth != double.NaN &&
-                    this.elem.ActualHeight != double.NaN)
-                {
-                    double x = this.x;
-                    double y = this.y;
-                    if (this.align == 1 || this.align == 4 || this.align == 7)
-                        x = this.x;
-                    if (this.align == 2 || this.align == 5 || this.align == 8)
-                        x = this.x - this.elem.ActualWidth / 2.0;
-                    if (this.align == 3 || this.align == 6 || this.align == 9)
-                        x = this.x - this.elem.ActualWidth;
+                this.elem.Measure(new Size(this.obj.canvas.Width, this.obj.canvas.Height));
 
-                    if (this.align == 1 || this.align == 2 || this.align == 3)
-                        y = this.y - this.elem.ActualHeight;
-                    if (this.align == 4 || this.align == 5 || this.align == 6)
-                        y = this.y - this.elem.ActualHeight / 2.0;
-                    if (this.align == 7 || this.align == 8 || this.align == 9)
-                        y = this.y;
+                double x = this.x;
+                double y = this.y;
+                if (this.align == 1 || this.align == 4 || this.align == 7)
+                    x = this.x;
+                if (this.align == 2 || this.align == 5 || this.align == 8)
+                    x = this.x - this.elem.ActualWidth / 2.0;
+                if (this.align == 3 || this.align == 6 || this.align == 9)
+                    x = this.x - this.elem.ActualWidth;
 
-                    Canvas.SetLeft(this.elem, x);
-                    Canvas.SetTop(this.elem, y);
-                }
-                else
-                {
-                    Canvas.SetLeft(this.elem, this.obj.canvas.Width + 1.0);
-                    Canvas.SetTop(this.elem, this.obj.canvas.Height + 1.0);
-                }
+                if (this.align == 1 || this.align == 2 || this.align == 3)
+                    y = this.y - this.elem.ActualHeight;
+                if (this.align == 4 || this.align == 5 || this.align == 6)
+                    y = this.y - this.elem.ActualHeight / 2.0;
+                if (this.align == 7 || this.align == 8 || this.align == 9)
+                    y = this.y;
+
+                Canvas.SetLeft(this.elem, x);
+                Canvas.SetTop(this.elem, y);
             }
         }
     }
