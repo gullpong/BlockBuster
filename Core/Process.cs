@@ -27,13 +27,13 @@ namespace BlockBuster.Core
         public int focusColSpan;
 
         public int blockColors;
-        public int bubbleFreq;
+        public int mudFreq;
         public int toughFreq;
-        public int durabilityMax;
+        public int toughMax;
         public int bustThreshold;
         public int bustScoreBase;
         public double comboBonusCoeff;
-        public double comboTimeLimit;
+        public double comboDelay;
         public double timeLimit;
         public int moveLimit;
     }
@@ -115,7 +115,7 @@ namespace BlockBuster.Core
                                      this.settings.bustScoreBase);
 
             this.combo = new Combo(this.pool, this.createAnimation(typeof(Combo)),
-                                   1.0 / (double)this.settings.fps / this.settings.comboTimeLimit,
+                                   1.0 / (double)this.settings.fps / this.settings.comboDelay,
                                    this.settings.comboBonusCoeff);
 
             this.focus = new Focus(this.pool, this.createAnimation(typeof(Focus)),
@@ -128,16 +128,23 @@ namespace BlockBuster.Core
                                  this.CreateAnimationPair,
                                  this.settings.boardRows * this.settings.boardCols,
                                  this.settings.blockColors,
-                                 this.settings.bubbleFreq,
+                                 this.settings.mudFreq,
                                  this.settings.toughFreq,
-                                 this.settings.durabilityMax);
+                                 this.settings.toughMax);
+
+            this.board = new Board(this.pool, this.focus, this.next,
+                                   this.settings.boardRows,
+                                   this.settings.boardCols,
+                                   this.settings.bustThreshold);
 
             if (this.settings.gameMode == GameModes.Classic)
             {
                 this.moves = new Moves(this.pool, this.createAnimation(typeof(Moves)),
                                        this.settings.moveLimit);
 
-                this.Phase = Phases.NextCycle;
+                this.Phase = Phases.CountDown;
+                this.messages = new Queue<string>();
+                this.messages.Enqueue("Game\nSTART");
             } else
             {
                 this.time = new Time(this.pool, this.createAnimation(typeof(Time)),
@@ -149,13 +156,8 @@ namespace BlockBuster.Core
                 this.messages.Enqueue("3");
                 this.messages.Enqueue("2");
                 this.messages.Enqueue("1");
-                this.messages.Enqueue("Go!");
+                this.messages.Enqueue("GO");
             }
-
-            this.board = new Board(this.pool, this.focus, this.next,
-                                   this.settings.boardRows,
-                                   this.settings.boardCols,
-                                   this.settings.bustThreshold);
         }
 
         public void Do()
@@ -184,7 +186,13 @@ namespace BlockBuster.Core
                     }
                     else
                     {
-                        this.time.Elapse = true;
+                        if (this.settings.gameMode == GameModes.Classic)
+                        {
+
+                        } else
+                        {
+                            this.time.Elapse = true;
+                        }                        
                         this.Phase = Phases.NextCycle;
                     }
                     break;

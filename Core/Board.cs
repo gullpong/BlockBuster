@@ -63,13 +63,13 @@ namespace BlockBuster.Core
             GroupNormalBlocks(view, blocks, color, row, col + 1);
         }
 
-        private void GroupBubbleBlocks(Block[,] view, List<Block> blocks, int row, int col)
+        private void GroupMudBlocks(Block[,] view, List<Block> blocks, int row, int col)
         {
             var block = row >= 0 && col >= 0 && row < this.Rows && col < this.Cols ?
                         view[row, col] : null;
             if (block == null)
                 return;
-            if (block.Type != Block.Types.Bubble)
+            if (block.Type != Block.Types.Mud)
                 return;
             view[row, col] = null;
             blocks.Add(block);
@@ -92,21 +92,21 @@ namespace BlockBuster.Core
                 this.GroupNormalBlocks(view, normalBlocks, block.Color, block.Row, block.Col);
                 if (normalBlocks.Count >= this.bustThreshold)
                 {
-                    var bubbleBlocks = new List<Block>();
+                    var mudBlocks = new List<Block>();
                     foreach (var nblock in normalBlocks)
                     {
-                        this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row + 1, nblock.Col);
-                        this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row, nblock.Col + 1);
-                        this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row - 1, nblock.Col);
-                        this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row, nblock.Col - 1);
+                        this.GroupMudBlocks(view, mudBlocks, nblock.Row + 1, nblock.Col);
+                        this.GroupMudBlocks(view, mudBlocks, nblock.Row, nblock.Col + 1);
+                        this.GroupMudBlocks(view, mudBlocks, nblock.Row - 1, nblock.Col);
+                        this.GroupMudBlocks(view, mudBlocks, nblock.Row, nblock.Col - 1);
                         /*
-                        this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row + 1, nblock.Col + 1);
-                        this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row + 1, nblock.Col - 1);
-                        this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row - 1, nblock.Col + 1);
-                        this.GroupBubbleBlocks(view, bubbleBlocks, nblock.Row - 1, nblock.Col - 1);
+                        this.GroupMudBlocks(view, mudBlocks, nblock.Row + 1, nblock.Col + 1);
+                        this.GroupMudBlocks(view, mudBlocks, nblock.Row + 1, nblock.Col - 1);
+                        this.GroupMudBlocks(view, mudBlocks, nblock.Row - 1, nblock.Col + 1);
+                        this.GroupMudBlocks(view, mudBlocks, nblock.Row - 1, nblock.Col - 1);
                         */
                     }
-                    bustGroups.Enqueue(new BustGroup(normalBlocks, bubbleBlocks));
+                    bustGroups.Enqueue(new BustGroup(normalBlocks, mudBlocks));
                 }
             }
             return bustGroups;
@@ -124,7 +124,7 @@ namespace BlockBuster.Core
         {
             // Create at the initial position based on the seed info.
             var block = new Block(this.pool,
-                                  blockSeed.BlockAnimation, blockSeed.Type, blockSeed.Color, blockSeed.Dur,
+                                  blockSeed.BlockAnimation, blockSeed.Type, blockSeed.Color, blockSeed.Toughness,
                                   initRow, initCol);
             this.Depend(block);
             this.Blocks.Add(block);

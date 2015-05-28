@@ -18,6 +18,7 @@ using Windows.UI.Xaml.Shapes;
 using Windows.UI.Popups;
 using Windows.UI.Core;
 
+
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
 namespace BlockBuster
@@ -30,7 +31,9 @@ namespace BlockBuster
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        private GameSettings settingsDialog;
         private ProcessSettings settings;
+        private bool started;
 
         private double animateSpeed;
         private Size blockSize;
@@ -48,63 +51,13 @@ namespace BlockBuster
         {
             this.InitializeComponent();
 
-            this.settings = new ProcessSettings();
-            this.settings.fps = 60;
-            //this.settings.gameMode = GameModes.Classic;
-            this.settings.gameMode = GameModes.TimeAttack;
-
-            this.settings.boardRows = 5;
-            this.settings.boardCols = 5;
-            this.settings.focusRow = 0;
-            this.settings.focusCol = 0;
-            this.settings.focusRowSpan = 5;
-            this.settings.focusColSpan = 5;
-            this.settings.blockColors = 4;
-
-            this.settings.bubbleFreq = 10;
-            this.settings.toughFreq = 0;
-            this.settings.durabilityMax = 2;
-            this.settings.bustThreshold = 3;
-            this.settings.bustScoreBase = 100;
-            this.settings.comboTimeLimit = 1.5;
-            this.settings.comboBonusCoeff = 0.2;            
-            this.settings.timeLimit = 60.0;
-            this.settings.moveLimit = 30;
-
-            this.animateSpeed = 1.0;
-            this.blockSize = new Size(60.0, 60.0);
-            this.fontSize = 50.0;
-            this.tabWidth = 200;
-            this.blockShineDelay = 20.0;
-            this.boardBound = new Rect((this.GameView.Width - this.blockSize.Width * this.settings.boardCols) / 2.0,
-                                       (this.GameView.Height - this.blockSize.Height * this.settings.boardRows) / 2.0,
-                                       this.blockSize.Width * this.settings.boardCols,
-                                       this.blockSize.Height * this.settings.boardRows);
-            this.comboBound = new Rect(this.boardBound.Left - this.blockSize.Width,
-                                       this.boardBound.Top - this.blockSize.Height * 2.0,
-                                       this.boardBound.Width + this.blockSize.Width * 2.0,
-                                       this.blockSize.Height * 2.0);
-            this.nextBound = new Rect(this.boardBound.Left - this.tabWidth - this.blockSize.Width,
-                                      this.boardBound.Bottom + this.blockSize.Height * 0.5,
-                                      this.boardBound.Width + this.tabWidth + this.blockSize.Width * 2.0,
-                                      this.blockSize.Height * 1.0);
-            this.timeBound = new Rect(this.blockSize.Width * 0.5,
-                                      this.blockSize.Height * 0.5,
-                                      this.GameView.Width - this.blockSize.Width,
-                                      this.blockSize.Height * 1.0);
-            this.movesBound = new Rect(this.boardBound.Left - this.tabWidth - this.blockSize.Width,
-                                       this.blockSize.Height * 0.5,
-                                       this.boardBound.Width + this.tabWidth + this.blockSize.Width * 2.0,
-                                       this.blockSize.Height * 1.0);
-            this.recordBound = new Rect(0.0,
-                                        this.GameView.Height - this.fontSize * 2.0,
-                                        this.GameView.Width,
-                                        this.fontSize * 2.0);
-
-            Process.Instance.Initialize(this.settings, this.CreateAnimation);
+            this.settingsDialog = new GameSettings();
 
             CompositionTarget.Rendering += DoGame;
             CoreWindow.GetForCurrentThread().KeyDown += Page_KeyDown;
+
+            this.started = false;
+            this.RestartGame();
         }
 
         public IObjectAnimation CreateAnimation(Type type)
@@ -171,24 +124,65 @@ namespace BlockBuster
                                               type));
         }
 
+        private async void RestartGame()
+        {
+            bool success = await PopoverControl.ShowAsync(this.settingsDialog);
+            this.settings = this.settingsDialog.Result;
+            this.animateSpeed = 1.0;
+            if (this.settings.boardCols < 4)
+                this.blockSize = new Size(70.0, 70.0);
+            else if (this.settings.boardCols < 6)
+                this.blockSize = new Size(60.0, 60.0);
+            else
+                this.blockSize = new Size(50.0, 50.0);
+            this.fontSize = 50.0;
+            this.tabWidth = 200;
+            this.blockShineDelay = 20.0;
+            this.boardBound = new Rect((this.GameView.Width - this.blockSize.Width * this.settings.boardCols) / 2.0,
+                                       (this.GameView.Height - this.blockSize.Height * this.settings.boardRows) / 2.0,
+                                       this.blockSize.Width * this.settings.boardCols,
+                                       this.blockSize.Height * this.settings.boardRows);
+            this.comboBound = new Rect(this.boardBound.Left - this.blockSize.Width,
+                                       this.boardBound.Top - this.blockSize.Height * 2.0,
+                                       this.boardBound.Width + this.blockSize.Width * 2.0,
+                                       this.blockSize.Height * 2.0);
+            this.nextBound = new Rect(this.boardBound.Left - this.tabWidth - this.blockSize.Width,
+                                      this.boardBound.Bottom + this.blockSize.Height * 0.5,
+                                      this.boardBound.Width + this.tabWidth + this.blockSize.Width * 2.0,
+                                      this.blockSize.Height * 1.0);
+            this.timeBound = new Rect(this.blockSize.Width * 0.5,
+                                      this.blockSize.Height * 0.5,
+                                      this.GameView.Width - this.blockSize.Width,
+                                      this.blockSize.Height * 1.0);
+            this.movesBound = new Rect(this.boardBound.Left - this.tabWidth - this.blockSize.Width,
+                                       this.blockSize.Height * 0.5,
+                                       this.boardBound.Width + this.tabWidth + this.blockSize.Width * 2.0,
+                                       this.blockSize.Height * 1.0);
+            this.recordBound = new Rect(0.0,
+                                        this.GameView.Height - this.fontSize * 2.0,
+                                        this.GameView.Width,
+                                        this.fontSize * 2.0);
+
+            Process.Instance.Initialize(this.settings, this.CreateAnimation);
+            this.started = true;
+        }
+
         private async void AboutButton_Click(object sender, RoutedEventArgs e)
         {
-            var msgDlg = new MessageDialog("BlockBuster for Windows\n(Prototype Ver 1.0.0)");
+            var msgDlg = new MessageDialog("BlockBuster for Windows\n(Prototype Ver 1.0.0)", "About");
             await msgDlg.ShowAsync();
         }
 
         private async void ResetButton_Click(object sender, RoutedEventArgs e)
         {
-            var msgDlg = new MessageDialog("Restart the Game?");
+            var msgDlg = new MessageDialog("Do you want to restart the game?", "Restart Game");
             msgDlg.Commands.Add(new UICommand("Yes"));
             msgDlg.Commands.Add(new UICommand("No"));
             msgDlg.DefaultCommandIndex = 0;
             msgDlg.CancelCommandIndex = 1;
             IUICommand command = await msgDlg.ShowAsync();
             if (command.Label == "Yes")
-            {
-                Process.Instance.Initialize(this.settings, this.CreateAnimation);
-            }
+                this.RestartGame();
         }
 
         private void GameView_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -202,10 +196,20 @@ namespace BlockBuster
 
         private void DoGame(object sender, object e)
         {
-            Process.Instance.Do();
-            if (Process.Instance.Phase == Process.Phases.GameOver)
-            {
+            if (!this.started)
+                return;
 
+            try
+            {
+                Process.Instance.Do();
+                if (Process.Instance.Phase == Process.Phases.GameOver)
+                {
+
+                }
+            } catch (Exception ex)
+            {
+                var stackTrace = ex.StackTrace;
+                var errMessage = ex.Message;
             }
         }
     }

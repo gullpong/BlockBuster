@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
@@ -14,6 +15,9 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+
+using Windows.UI.Core;
+
 
 // The Blank Application template is documented at http://go.microsoft.com/fwlink/?LinkId=234227
 
@@ -116,4 +120,98 @@ namespace BlockBuster
             await Windows.Storage.FileIO.WriteTextAsync(sampleFile, "Swift as a shadow");
         }
     }
+
+
+    public partial class PopoverControl
+    {
+        private Popup popup;
+        private bool shown;
+        private bool succeeded;
+        private TaskCompletionSource<bool> tcs;
+
+        // Global PopoverControl Singleton
+        private static PopoverControl _instance;
+        public static PopoverControl Instance
+        {
+            get
+            {
+                if (_instance == null)
+                    _instance = new PopoverControl();
+                return _instance;
+            }
+        }
+        private PopoverControl()
+        {
+        }
+
+        public static Task<bool> ShowAsync(UserControl userControl)
+        {
+            if (userControl == null)
+                throw new ArgumentNullException("userControl");
+            if (PopoverControl.Instance.shown)
+                throw new InvalidOperationException("Duplicate PopoverControl shown");
+
+            PopoverControl.Instance.tcs = new TaskCompletionSource<bool>();
+            PopoverControl.Instance.popup = new Popup();
+            PopoverControl.Instance.popup.Child = userControl;
+            PopoverControl.Instance.popup.Closed += PopoverControl.Instance.OnClosed;
+            PopoverControl.Instance.popup.IsOpen = true;
+            PopoverControl.Instance.shown = true;
+            PopoverControl.Instance.succeeded = false;
+
+            return PopoverControl.Instance.tcs.Task;
+        }
+
+        public static void Close(bool succeeded)
+        {
+            PopoverControl.Instance.succeeded = succeeded;
+            PopoverControl.Instance.popup.Child = null;
+            PopoverControl.Instance.popup.IsOpen = false;
+        }
+
+        private void OnClosed(object sender, object e)
+        {
+            this.shown = false;
+            this.popup.Closed -= this.OnClosed;
+            this.tcs.SetResult(this.succeeded);
+        }
+    }
+
+    public sealed class PopoverView : ContentControl
+    {
+        public PopoverView()
+        {
+            this.DefaultStyleKey = typeof(PopoverView);
+            this.Style = Application.Current.Resources["PopoverViewStyle"] as Style;
+            this.Loaded += this.OnLoaded;
+            this.Unloaded += this.OnUnloaded;
+        }
+
+        /// <summary>
+        /// Measure the size of this control: make it cover the full App window
+        /// </summary>
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            Rect bounds = Window.Current.Bounds;
+            availableSize = new Size(bounds.Width, bounds.Height);
+            base.MeasureOverride(availableSize);
+            return availableSize;
+        }
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            Window.Current.SizeChanged += this.OnSizeChanged;
+        }
+
+        private void OnSizeChanged(object sender, WindowSizeChangedEventArgs e)
+        {
+            base.InvalidateMeasure();
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            Window.Current.SizeChanged -= this.OnSizeChanged;
+        }
+    }
+
 }

@@ -823,7 +823,7 @@ namespace BlockBuster.Animation
         private double y;
         private double width;
         private double height;
-        private int dur;
+        private int toughness;
 
         private Rectangle frame;
         private TextBlock mark;
@@ -930,14 +930,14 @@ namespace BlockBuster.Animation
                 this.Y = this.Y;
             }
         }
-        public int Dur
+        public int Toughness
         {
-            get { return this.dur; }
+            get { return this.toughness; }
             set 
             {
-                this.dur = value;
-                this.mark.Text = String.Format("{0}", this.dur);
-                if (this.dur > 1)
+                this.toughness = value;
+                this.mark.Text = String.Format("{0}", this.toughness);
+                if (this.toughness > 1)
                 {
                     var col = this.strokeColor;
                     col.A = 68;
@@ -1057,12 +1057,12 @@ namespace BlockBuster.Animation
                 switch (this.model.State)
                 {
                     case Core.Block.States.Idle:
-                        this.iceBlock.Dur = this.model.Dur;
+                        this.iceBlock.Toughness = this.model.Toughness;
                         this.state = this.model.State;
                         break;
 
                     case Core.Block.States.Moved:
-                        this.iceBlock.Dur = this.model.Dur;
+                        this.iceBlock.Toughness = this.model.Toughness;
                         double x = this.model.Col * this.size.Width + this.size.Width / 2.0;
                         double y = this.model.Row * this.size.Height + this.size.Height / 2.0;
                         this.iceBlock.X = this.blockX.Fall(x);
@@ -1126,7 +1126,7 @@ namespace BlockBuster.Animation
             this.iceBlock.Y = this.bound.Height / 2.0;
             this.iceBlock.Width = this.size.Width;
             this.iceBlock.Height = this.size.Height;
-            this.iceBlock.Dur = this.model.Dur;
+            this.iceBlock.Toughness = this.model.Toughness;
             this.iceBlock.Register(this.canvas);
 
             this.blockX = new Trajector(this, this.iceBlock.X);

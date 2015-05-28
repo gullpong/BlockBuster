@@ -38,7 +38,7 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal">
-                <Button IsTabStop="False" Content="Restart" Width="160" Height="80" Click="ResetButton_Click"/>
+                <Button x:Name="ResetButton" IsTabStop="False" Content="Restart" Width="160" Height="80" Click="ResetButton_Click"/>
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button IsTabStop="False" Content="About" Width="160" Height="80" Click="AboutButton_Click"/>

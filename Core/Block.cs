@@ -10,11 +10,11 @@ namespace BlockBuster.Core
         public enum Types
         {
             Normal,
-            Bubble
+            Mud
         }
         public Types Type { get; protected set; }
         public int Color { get; protected set; }
-        public int Dur { get; protected set; }
+        public int Toughness { get; protected set; }
         public int Row { get; private set; }
         public int Col { get; private set; }
         public enum States
@@ -27,12 +27,12 @@ namespace BlockBuster.Core
         public States State { get; private set; }
 
         public Block(ObjectPool pool, IObjectAnimation animation,
-                     Types type, int color, int dur, int row, int col)
+                     Types type, int color, int toughness, int row, int col)
             : base(pool)
         {
             this.Type = type;
             this.Color = color;
-            this.Dur = dur;
+            this.Toughness = toughness;
             this.Row = row;
             this.Col = col;
             this.State = States.Idle;
@@ -62,8 +62,8 @@ namespace BlockBuster.Core
                     break;
 
                 case States.Busted:
-                    this.Dur--;
-                    if (this.Dur <= 0)
+                    this.Toughness--;
+                    if (this.Toughness <= 0)
                         this.State = States.Dead;
                     else
                         this.State = States.Idle;
@@ -93,21 +93,21 @@ namespace BlockBuster.Core
         public IObjectAnimation BlockAnimation { get; private set; }
         public Block.Types Type { get; private set; }
         public int Color { get; private set; }
-        public int Dur { get; private set; }
+        public int Toughness { get; private set; }
         public int Rank { get; private set; }
         public int Total { get; private set; }
 
         private bool alive;
 
         public BlockSeed(ObjectPool pool, IObjectAnimation animation,
-                         IObjectAnimation blockAnimation, Block.Types type, int color, int dur,
+                         IObjectAnimation blockAnimation, Block.Types type, int color, int toughness,
                          int rank, int total)
             : base(pool)
         {
             this.BlockAnimation = blockAnimation;
             this.Type = type;
             this.Color = color;
-            this.Dur = dur;
+            this.Toughness = toughness;
             this.Rank = rank;
             this.Total = total;
 
@@ -141,13 +141,13 @@ namespace BlockBuster.Core
         private Func<AnimationPair> createAnimationPair;
         private int qSize;
         private int blockColors;
-        private int bubbleFreq;
+        private int mudFreq;
         private int toughFreq;
-        private int durMax;
+        private int toughMax;
 
         public Next(ObjectPool pool, IObjectAnimation animation,
                     Func<AnimationPair> createAnimationPair,
-                    int qSize, int blockColors, int bubbleFreq, int toughFreq, int durMax)
+                    int qSize, int blockColors, int mudFreq, int toughFreq, int toughMax)
             : base(pool)
         {
             this.Q = new Queue<BlockSeed>();
@@ -160,9 +160,9 @@ namespace BlockBuster.Core
             this.createAnimationPair = createAnimationPair;
             this.qSize = qSize;
             this.blockColors = blockColors;
-            this.bubbleFreq = bubbleFreq;
+            this.mudFreq = mudFreq;
             this.toughFreq = toughFreq;
-            this.durMax = durMax;
+            this.toughMax = toughMax;
 
             this.Animate(animation);
         }
@@ -186,14 +186,14 @@ namespace BlockBuster.Core
         {
             while (this.Q.Count < this.qSize)
             {
-                Block.Types type = Process.RandGen.Next() % 100 < this.bubbleFreq ?
-                                   Block.Types.Bubble : Block.Types.Normal;
+                Block.Types type = Process.RandGen.Next() % 100 < this.mudFreq ?
+                                   Block.Types.Mud : Block.Types.Normal;
                 var color = Process.RandGen.Next() % this.blockColors;
-                var dur = type == Block.Types.Normal && Process.RandGen.Next() % 100 < this.toughFreq ?
-                          Process.RandGen.Next() % this.durMax + 1 : 1;
+                var toughness = type == Block.Types.Normal && Process.RandGen.Next() % 100 < this.toughFreq ?
+                                Process.RandGen.Next() % this.toughMax + 1 : 1;
                 var rank = this.Q.Count - 1 + this.qSize;
                 var aniPair = this.createAnimationPair();
-                var blockSeed = new BlockSeed(this.pool, aniPair.Item1, aniPair.Item2, type, color, dur,
+                var blockSeed = new BlockSeed(this.pool, aniPair.Item1, aniPair.Item2, type, color, toughness,
                                               rank, this.qSize);
                 this.Depend(blockSeed);
                 this.Q.Enqueue(blockSeed);

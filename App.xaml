@@ -3,5 +3,33 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:BlockBuster">
+    
+    <Application.Resources>
+        <SolidColorBrush x:Key="PopoverViewForegroundThemeBrush">Black</SolidColorBrush>
+        <SolidColorBrush x:Key="PopoverViewBackgroundThemeBrush">White</SolidColorBrush>
+        <SolidColorBrush x:Key="PopoverViewOverlayThemeBrush">#80000000</SolidColorBrush>
+        <Style x:Key="PopoverViewStyle" TargetType="local:PopoverView">
+            <Setter Property="RequestedTheme" Value="Light"/>
+            <Setter Property="Foreground" Value="{StaticResource PopoverViewForegroundThemeBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="local:PopoverView">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Border Grid.Row="0" Background="{StaticResource PopoverViewOverlayThemeBrush}" />
+                            <Border Grid.Row="1" Child="{TemplateBinding Content}" Background="{StaticResource PopoverViewBackgroundThemeBrush}" />
+                            <Border Grid.Row="2" Background="{StaticResource PopoverViewOverlayThemeBrush}" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Application.Resources>
+
 
 </Application>
