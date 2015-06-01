@@ -127,6 +127,7 @@ namespace BlockBuster
         private async void RestartGame()
         {
             bool success = await PopoverControl.ShowAsync(this.settingsDialog);
+
             this.settings = this.settingsDialog.Result;
             this.animateSpeed = 1.0;
             if (this.settings.boardCols < 4)
@@ -169,7 +170,12 @@ namespace BlockBuster
 
         private async void AboutButton_Click(object sender, RoutedEventArgs e)
         {
-            var msgDlg = new MessageDialog("BlockBuster for Windows\n(Prototype Ver 1.0.0)", "About");
+            var msgDlg = new MessageDialog("BlockBuster Prototype (ver 1.0.1)\n" +
+                                           "Jinyong Lee <gullpong9@gmail.com>\n" +
+                                           "\n" +
+                                           "Arrow Keys: Slide blocks from four directions.\n" +
+                                           "Spacebar:   Shuffle current blocks (while losing combos).",                                          
+                                           "About");
             await msgDlg.ShowAsync();
         }
 
@@ -198,7 +204,6 @@ namespace BlockBuster
         {
             if (!this.started)
                 return;
-
             try
             {
                 Process.Instance.Do();

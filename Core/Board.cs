@@ -120,154 +120,166 @@ namespace BlockBuster.Core
                 block.Bust();        
         }
 
-        private void DeployBlock(BlockSeed blockSeed, int initRow, int initCol, int row, int col)
+        private Block NewBlock(BlockSeed blockSeed, int row, int col)
         {
             // Create at the initial position based on the seed info.
             var block = new Block(this.pool,
                                   blockSeed.BlockAnimation, blockSeed.Type, blockSeed.Color, blockSeed.Toughness,
-                                  initRow, initCol);
+                                  row, col);
             this.Depend(block);
             this.Blocks.Add(block);
             block.Release += b =>
             {
                 this.Blocks.Remove((Block)b);
             };
-
-            // Move to the target position.
-            block.Move(row, col);
+            return block;
         }
 
         public bool Slide(int dir)
         {
             var view = this.BuildView();
             bool slid = false;
+            var dpos = new int[Math.Max(this.Rows, this.Cols)];
+            var cpos = new int[Math.Max(this.Rows, this.Cols)];
             switch (dir)
             {
                 case 8:
                     for (var col = 0; col < this.Cols; col++)
+                        dpos[col] = cpos[col] = 0;
+                    while (true)
                     {
-                        for (var row = 0; row < this.Rows; row++)
+                        var stop = true;
+                        for (var col = 0; col < this.Cols; col++)
                         {
-                            var block = view[row, col];
-                            if (block == null)
+                            if (dpos[col] >= this.Rows)
                                 continue;
-                            for (var nrow = row - 1; nrow >= 0; nrow--)
+                            stop = false;
+                            Block block;
+                            if (cpos[col] < this.Rows)
+                                block = view[cpos[col], col];
+                            else
+                                block = this.NewBlock(this.next.Pop(), cpos[col], col);
+                            if (block != null)
                             {
-                                if (view[nrow, col] != null)
-                                    break;
-                                view[block.Row, block.Col] = null;
-                                block.Move(nrow, col);
-                                view[block.Row, block.Col] = block;
-                                slid = true;
+                                if (block.Row != dpos[col])
+                                {
+                                    if (cpos[col] < this.Rows)
+                                        view[block.Row, block.Col] = null;
+                                    block.Move(dpos[col], col);
+                                    view[block.Row, block.Col] = block;
+                                    slid = true;
+                                }
+                                dpos[col]++;
                             }
+                            cpos[col]++;
                         }
-                    }
-                    for (var col = 0; col < this.Cols; col++)
-                    {
-                        for (var row = 0; row < this.Rows; row++)
-                        {
-                            if (view[row, col] == null)
-                            {
-                                this.DeployBlock(this.next.Pop(), row + this.Rows, col, row, col);
-                                slid = true;
-                            }
-                        }
+                        if (stop)
+                            break;
                     }
                     break;
 
                 case 2:
                     for (var col = 0; col < this.Cols; col++)
+                        dpos[col] = cpos[col] = this.Rows - 1;
+                    while (true)
                     {
-                        for (var row = this.Rows - 1; row >= 0; row--)
+                        var stop = true;
+                        for (var col = this.Cols - 1; col >= 0; col--)
                         {
-                            var block = view[row, col];
-                            if (block == null)
+                            if (dpos[col] < 0)
                                 continue;
-                            for (var nrow = row + 1; nrow < this.Rows; nrow++)
+                            stop = false;
+                            Block block;
+                            if (cpos[col] >= 0)
+                                block = view[cpos[col], col];
+                            else
+                                block = this.NewBlock(this.next.Pop(), cpos[col], col);
+                            if (block != null)
                             {
-                                if (view[nrow, col] != null)
-                                    break;
-                                view[block.Row, block.Col] = null;
-                                block.Move(nrow, col);
-                                view[block.Row, block.Col] = block;
-                                slid = true;
+                                if (block.Row != dpos[col])
+                                {
+                                    if (cpos[col] >= 0)
+                                        view[block.Row, block.Col] = null;
+                                    block.Move(dpos[col], col);
+                                    view[block.Row, block.Col] = block;
+                                    slid = true;
+                                }
+                                dpos[col]--;
                             }
+                            cpos[col]--;
                         }
-                    }
-                    for (var col = 0; col < this.Cols; col++)
-                    {
-                        for (var row = this.Rows - 1; row >= 0; row--)
-                        {
-                            if (view[row, col] == null)
-                            {
-                                this.DeployBlock(this.next.Pop(), row - this.Rows, col, row, col);
-                                slid = true;
-                            }
-                        }
+                        if (stop)
+                            break;
                     }
                     break;
 
                 case 4:
                     for (var row = 0; row < this.Rows; row++)
+                        dpos[row] = cpos[row] = 0;
+                    while (true)
                     {
-                        for (var col = 0; col < this.Cols; col++)
+                        var stop = true;
+                        for (var row = this.Rows - 1; row >= 0; row--)
                         {
-                            var block = view[row, col];
-                            if (block == null)
+                            if (dpos[row] >= this.Cols)
                                 continue;
-                            for (var ncol = col - 1; ncol >= 0; ncol--)
+                            stop = false;
+                            Block block;
+                            if (cpos[row] < this.Cols)
+                                block = view[row, cpos[row]];
+                            else
+                                block = this.NewBlock(this.next.Pop(), row, cpos[row]);
+                            if (block != null)
                             {
-                                if (view[row, ncol] != null)
-                                    break;
-                                view[block.Row, block.Col] = null;
-                                block.Move(row, ncol);
-                                view[block.Row, block.Col] = block;
-                                slid = true;
+                                if (block.Col != dpos[row])
+                                {
+                                    if (cpos[row] < this.Cols)
+                                        view[block.Row, block.Col] = null;
+                                    block.Move(row, dpos[row]);
+                                    view[block.Row, block.Col] = block;
+                                    slid = true;
+                                }
+                                dpos[row]++;
                             }
+                            cpos[row]++;
                         }
-                    }
-                    for (var row = 0; row < this.Rows; row++)
-                    {
-                        for (var col = 0; col < this.Cols; col++)
-                        {
-                            if (view[row, col] == null)
-                            {
-                                this.DeployBlock(this.next.Pop(), row, col + this.Cols, row, col);
-                                slid = true;
-                            }
-                        }
+                        if (stop)
+                            break;
                     }
                     break;
 
                 case 6:
                     for (var row = 0; row < this.Rows; row++)
+                        dpos[row] = cpos[row] = this.Cols - 1;
+                    while (true)
                     {
-                        for (var col = this.Cols - 1; col >= 0; col--)
+                        var stop = true;
+                        for (var row = 0; row < this.Rows; row++)
                         {
-                            var block = view[row, col];
-                            if (block == null)
+                            if (dpos[row] < 0)
                                 continue;
-                            for (var ncol = col + 1; ncol < this.Cols; ncol++)
+                            stop = false;
+                            Block block;
+                            if (cpos[row] >= 0)
+                                block = view[row, cpos[row]];
+                            else
+                                block = this.NewBlock(this.next.Pop(), row, cpos[row]);
+                            if (block != null)
                             {
-                                if (view[row, ncol] != null)
-                                    break;
-                                view[block.Row, block.Col] = null;
-                                block.Move(row, ncol);
-                                view[block.Row, block.Col] = block;
-                                slid = true;
+                                if (block.Col != dpos[row])
+                                {
+                                    if (cpos[row] >= 0)
+                                        view[block.Row, block.Col] = null;
+                                    block.Move(row, dpos[row]);
+                                    view[block.Row, block.Col] = block;
+                                    slid = true;
+                                }
+                                dpos[row]--;
                             }
+                            cpos[row]--;
                         }
-                    }
-                    for (var row = 0; row < this.Rows; row++)
-                    {
-                        for (var col = this.Cols - 1; col >= 0; col--)
-                        {
-                            if (view[row, col] == null)
-                            {
-                                this.DeployBlock(this.next.Pop(), row, col - this.Cols, row, col);
-                                slid = true;
-                            }
-                        }
+                        if (stop)
+                            break;
                     }
                     break;
             }
